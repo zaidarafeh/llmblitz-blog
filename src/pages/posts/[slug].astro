@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map(post => ({
+    params: { slug: post.slug },
+    props:  { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+
+const {
+  title,
+  description,
+  pubDate,
+  tags,
+  tool,
+  toolHref,
+} = post.data;
+
+function fmtDate(d: Date) {
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+const canonicalUrl = `https://blog.llmblitz.io/posts/${post.slug}`;
+---
+
+<BaseLayout title={title} description={description} canonicalUrl={canonicalUrl}>
+  <article class="post-page">
+
+    <header class="post-header">
+      <div class="post-tags">
+        {tags.map((tag: string) => <span class="post-tag">{tag}</span>)}
+      </div>
+      <h1 class="post-h1">{title}</h1>
+      <div class="post-meta">{fmtDate(pubDate)}</div>
+      <hr class="post-divider" />
+    </header>
+
+    <div class="post-body">
+      <Content />
+    </div>
+
+    {tool && toolHref && (
+      <div class="post-cta">
+        <div>
+          <div class="post-cta-text">Try it yourself with {tool}</div>
+          <div class="post-cta-sub">No setup required — paste your prompt and run.</div>
+        </div>
+        <a href={`https://llmblitz.io${toolHref}`} class="post-cta-btn">
+          Open {tool} →
+        </a>
+      </div>
+    )}
+
+  </article>
+</BaseLayout>

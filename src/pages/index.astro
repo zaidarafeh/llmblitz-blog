@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+function fmtDate(d: Date) {
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+---
+
+<BaseLayout
+  title="LLMBlitz Blog"
+  description="Practical prompt engineering insights — token-level analysis, cost optimization, and building reliable LLM pipelines."
+>
+  <div class="blog-page">
+    <p class="blog-eyebrow">LLMBlitz.io</p>
+    <h1 class="blog-title">Prompt Engineering,<br/>without the guesswork.</h1>
+    <p class="blog-subtitle">
+      Token-level breakdowns, cost teardowns, and practical guides for AI builders
+      who ship to production.
+    </p>
+
+    <div class="post-list">
+      {posts.map(post => (
+        <a href={`/posts/${post.slug}`} class="post-card">
+          <div class="post-card-tags">
+            {post.data.tags.map((tag: string) => (
+              <span class="post-tag">{tag}</span>
+            ))}
+          </div>
+          <div class="post-card-title">{post.data.title}</div>
+          <p class="post-card-excerpt">{post.data.description}</p>
+          <div class="post-card-meta">{fmtDate(post.data.pubDate)}</div>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
