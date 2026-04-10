@@ -1,0 +1,39 @@
+backend:
+  name: github
+  repo: zarafeh000/llmblitz-blog
+  branch: master
+
+media_folder: public/images
+public_folder: /images
+
+collections:
+  - name: blog
+    label: Blog Posts
+    folder: src/content/blog
+    create: true
+    slug: "{{slug}}"
+    extension: mdx
+    format: frontmatter
+    fields:
+      - { label: Title,       name: title,       widget: string }
+      - { label: Description, name: description,  widget: string }
+      - { label: Publish Date, name: pubDate,     widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - label: Tags
+        name: tags
+        widget: list
+        default: ["Prompt Engineering"]
+      - label: Tool (for CTA card)
+        name: tool
+        widget: string
+        required: false
+        hint: "e.g. BlitzLab, Prompt Designer, EcoBlitz"
+      - label: Tool URL
+        name: toolHref
+        widget: string
+        required: false
+        hint: "e.g. /optimize or /eco-blitz"
+      - label: Draft
+        name: draft
+        widget: boolean
+        default: false
+      - { label: Body, name: body, widget: markdown }
