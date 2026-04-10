@@ -1,7 +1,9 @@
 backend:
   name: github
-  repo: zarafeh000/llmblitz-blog
+  repo: zaidarafeh/llmblitz-blog
   branch: master
+  base_url: https://blog.llmblitz.io
+  auth_endpoint: oauth/authorize
 
 media_folder: public/images
 public_folder: /images
