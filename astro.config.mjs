@@ -1,8 +1,10 @@
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
+import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
   site: 'https://blog.llmblitz.io',
   integrations: [mdx()],
-  output: 'static',
+  output: 'hybrid',
+  adapter: cloudflare(),
 });
