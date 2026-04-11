@@ -11,7 +11,7 @@ toolHref: /optimize
 draft: true
 ---
 
-Hello everyone, this is Zaid, and I operate llmblitz.io. I want to welcome you to this blog.
+Hello, this is Zaid, and I operate llmblitz.io. I want to welcome you to this blog.
 
 The majority of prompts start in the same way: someone writes it as an instruction, it mostly does the job, they ship. Two weeks later it's causing incidents and nobody remembers why it was written this way.
 
@@ -108,14 +108,9 @@ Before shipping, we ran both the original and rewritten prompt through EcoBlitz 
 
 ![](/images/EcoBlitz.png)
 
-Notice the **80-81% cost savings we were able to achieve** by rewriting the prompt while model confidence remained at 88%.
-
-|  |
-| --- |
+Notice the **80-81% cost savings we were able to achieve** by rewriting the prompt to otpimize for token reduction  while model confidence remained at 88%.
 
 The output token reduction was the big one — the original's vague instructions caused the model to generate longer, more exploratory outputs before settling. The rewritten prompt committed immediately.
-
-**$3.12 → $1.44/month** doesn't sound dramatic. But this team had 4 similar prompts running at the same volume. The total saving across all four: **$25.20/month**, without touching a single line of application code.
 
 ## The production checklist
 
