@@ -1,28 +1,34 @@
 ---
-title: "How to Turn a Messy Prompt Into a Production-Ready One"
-draft: true
-description: "A step-by-step walkthrough of diagnosing, rewriting, testing, and cost-optimizing a real prompt — from first draft to something you'd actually ship."
+title: How to Turn a Messy Prompt Into a Production-Ready One
+description: A step-by-step walkthrough of diagnosing, rewriting, testing, and cost-optimizing a real prompt — from first draft to something you'd actually ship.
 pubDate: 2026-04-10
-tags: ["Prompt Engineering", "Production", "Best Practices"]
-tool: "BlitzLab"
-toolHref: "/optimize"
+tags:
+  - Prompt Engineering
+  - Production
+  - Best Practices
+tool: BlitzLab
+toolHref: /optimize
+draft: true
 ---
 
-Most prompts start the same way: someone writes a quick instruction, it mostly works, they ship it. Three months later it's causing incidents and nobody remembers why it was written that way.
+Hello everyone, this is Zaid, and I operate llmblitz.io. I want to welcome you to this blog.
 
-This is the process for doing it properly — from a rough first draft to something you'd put in production with confidence.
+The majority of prompts start in the same way: someone writes it as an instruction, it mostly does the job, they ship. Two weeks later it's causing incidents and nobody remembers why it was written this way.
+
+So, today I will lay out a better process for writing prompts — from a raw first draft to something you'd put in production with confidence.
 
 ## The starting prompt
 
-This is a real prompt (anonymized) from a team building an AI writing assistant:
+This is a real prompt (anonymized) from a team building an LLM-based writing assistant:
 
-```
+```plain
 You are a helpful writing assistant. Help the user improve their text. 
 Make it better, clearer, and more professional. Consider the context and 
 what the user is trying to achieve. Be helpful and provide good suggestions.
 ```
 
-It "works" in the sense that it produces improvements. But it fails in three ways they hadn't noticed yet:
+This prompt "works" in the sense that it makes some improvements. But it fails in 3 ways they hadn't noticed yet:
+
 1. It produces wildly inconsistent output length
 2. It occasionally rewrites the user's voice out of the text entirely
 3. It sometimes adds unsolicited structural changes (headers, bullets)
@@ -31,23 +37,23 @@ Let's trace exactly why.
 
 ## Step 1: Diagnose with token analysis
 
-The first thing we do is run this through BlitzLab's single analysis mode with a few real inputs.
+The first thing we do is run this through BlitzLab's single analysis mode with a few real inputs. I will use the opening statements from [Steve Jobs' famous speech](https://news.stanford.edu/stories/2005/06/youve-got-find-love-jobs-says) at Stanford University.
 
-{/* SCREENSHOT: BlitzLab output — token confidence heatmap on the writing assistant prompt */}
 
 **What BlitzLab found:**
 
-The finding on the first run: *"The phrase 'Make it better, clearer, and more professional' caused a 38% confidence drop on the first output token across all 5 test inputs — the model was uncertain whether to begin with the edited text, an explanation of changes, or a suggestion."*
+The finding on the first run: _"The prompt's instruction to 'Make it better, clearer, and more professional' caused the model to systematically replace the user's (Steve Jobs') casual phrasing  with formal alternatives, creating high uncertainty on tokens where informality and formality compete—ex: token 29 '**personally**' (26% confidence, with '**despite**' at 29%), and token 83 '**meaningful**' (2% confidence, with '**simple**' at 30%) all show **the model torn between matching the user's conversational tone and elevating to professional language**."_
 
-That's the core problem. Three adjectives ("better", "clearer", "more professional") that mean different things are forcing the model to resolve an ambiguity before it can start generating. It's picking randomly between output strategies.
 
-The recommendation: *"Replace 'Make it better, clearer, and more professional' with a single explicit instruction specifying what the output should contain."*
+Per BlitzLab's analysis, this is the core  problem: "The word 'professional' signaled the model (GTP4o mini) to formalize everything, so it kept second-guessing whether to preserve 'no big deal' or upgrade it to corporate language—the low confidence scores show it was genuinely uncertain about whether you wanted the casual tone kept."
+
+BlitzLab recommendation: _"Replace 'Make it better, clearer, and more professional' with 'Make it clearer and more polished while keeping the author's original voice and tone.' This tells the model to improve without erasing the casual, personal style that makes the opening effective."_
 
 ## Step 2: Rewrite with constraints
 
 Based on the diagnosis, here's the rewrite:
 
-```
+```plain
 You are a writing editor. Rewrite the text below to improve clarity and concision 
 while preserving the author's voice and original structure.
 
@@ -59,8 +65,9 @@ Rules:
 ```
 
 Four changes:
+
 1. Replaced vague adjectives with two specific goals ("clarity and concision")
-2. Added explicit constraints on what *not* to do (the root cause of the voice and structure issues)
+2. Added explicit constraints on what _not_ to do (the root cause of the voice and structure issues)
 3. Added output format constraint ("only the rewritten text")
 4. Added an edge case handler for already-good text
 
@@ -68,11 +75,12 @@ Four changes:
 
 We take the rewritten prompt to Prompt Designer, provide 5 real input examples with expected outputs, and run it against the same model.
 
-{/* SCREENSHOT: Prompt Designer results — ranked candidates with confidence scores */}
+{/\* SCREENSHOT: Prompt Designer results — ranked candidates with confidence scores \*/}
 
 The rewritten prompt scored **84/100** on empirical testing vs **51/100** for the original. More importantly, output variance dropped — the distribution of outputs tightened significantly around what the team actually wanted.
 
 We also tested two variants generated by Prompt Designer:
+
 - One that added an XML structure for the output
 - One that used a role definition with explicit constraints
 
@@ -80,12 +88,12 @@ The XML variant scored highest (91/100) but the team decided the simpler rewrite
 
 ## Step 4: Optimize for cost
 
-Before shipping, we ran both the original and rewritten prompt through EcoBlitz at the team's actual volume: ~15,000 calls/month.
+Before shipping, we ran both the original and rewritten prompt through EcoBlitz at the team's actual volume: \~15,000 calls/month.
 
-{/* SCREENSHOT: EcoBlitz results — original vs rewritten prompt cost comparison */}
+{/\* SCREENSHOT: EcoBlitz results — original vs rewritten prompt cost comparison \*/}
 
-| | Original | Rewritten | Savings |
-|--|----------|-----------|---------|
+|  | Original | Rewritten | Savings |
+| --- | --- | --- | --- |
 | Avg input tokens | 285 | 210 | −26% |
 | Avg output tokens | 340 | 180 | −47% |
 | Cost/month @ 15k calls | $3.12 | $1.44 | **−54%** |
@@ -98,10 +106,10 @@ The output token reduction was the big one — the original's vague instructions
 
 Before you ship any LLM prompt, run through this:
 
-**1. Does it specify what the output *contains*?**
+**1. Does it specify what the output _contains_?**
 Not "be helpful" — but "return X in format Y".
 
-**2. Does it constrain what the output *doesn't* contain?**
+**2. Does it constrain what the output _doesn't_ contain?**
 If you don't want headers, say so. If you don't want explanations, say "no explanation".
 
 **3. Have you tested it on your actual inputs, not just obvious ones?**
@@ -113,6 +121,6 @@ Low-confidence tokens on early positions mean the model is deciding between outp
 **5. Do you know what it costs at your real volume?**
 A prompt that costs $0.0003/call is $300/month at 1M calls. Know this before you ship.
 
----
+***
 
-*We ran every step in this walkthrough using LLMBlitz — BlitzLab for diagnosis, Prompt Designer for empirical testing, EcoBlitz for cost analysis. The full pipeline takes about 20 minutes.*
+_We ran every step in this walkthrough using LLMBlitz — BlitzLab for diagnosis, Prompt Designer for empirical testing, EcoBlitz for cost analysis. The full pipeline takes about 20 minutes._
