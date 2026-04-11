@@ -106,13 +106,12 @@ The XML variant scored highest (91/100) but the team decided the simpler rewrite
 
 Before shipping, we ran both the original and rewritten prompt through EcoBlitz at the team's actual volume: \~15,000 calls/month.
 
-{/\* SCREENSHOT: EcoBlitz results — original vs rewritten prompt cost comparison \*/}
+![](/images/EcoBlitz.png)
 
-|  | Original | Rewritten | Savings |
-| --- | --- | --- | --- |
-| Avg input tokens | 285 | 210 | −26% |
-| Avg output tokens | 340 | 180 | −47% |
-| Cost/month @ 15k calls | $3.12 | $1.44 | **−54%** |
+Notice the **80-81% cost savings we were able to achieve** by rewriting the prompt while model confidence remained at 88%.
+
+|  |
+| --- |
 
 The output token reduction was the big one — the original's vague instructions caused the model to generate longer, more exploratory outputs before settling. The rewritten prompt committed immediately.
 
