@@ -37,47 +37,63 @@ Let's trace exactly why.
 
 ## Step 1: Diagnose with token analysis
 
-The first thing we do is run this through BlitzLab's single analysis mode with a few real inputs. I will use the opening statements from [Steve Jobs' famous speech](https://news.stanford.edu/stories/2005/06/youve-got-find-love-jobs-says) at Stanford University.
-
+The first thing we do is run this through BlitzLab's single prompt analysis mode with a few real inputs. I will use the opening statements from [Steve Jobs' famous speech](https://news.stanford.edu/stories/2005/06/youve-got-find-love-jobs-says) at Stanford University.
 
 **What BlitzLab found:**
 
+![Blitzlab Token Analysis Portion](/images/Tokens.png "Blitzlab Token Analysis Portion")
+
 The finding on the first run: _"The prompt's instruction to 'Make it better, clearer, and more professional' caused the model to systematically replace the user's (Steve Jobs') casual phrasing  with formal alternatives, creating high uncertainty on tokens where informality and formality compete—ex: token 29 '**personally**' (26% confidence, with '**despite**' at 29%), and token 83 '**meaningful**' (2% confidence, with '**simple**' at 30%) all show **the model torn between matching the user's conversational tone and elevating to professional language**."_
 
+**The LLM was \~26% confident about picking the word 'personally'**
 
-Per BlitzLab's analysis, this is the core  problem: "The word 'professional' signaled the model (GTP4o mini) to formalize everything, so it kept second-guessing whether to preserve 'no big deal' or upgrade it to corporate language—the low confidence scores show it was genuinely uncertain about whether you wanted the casual tone kept."
+![The LLM was 25.7% confident about picking the word 'personally'](/images/Tokens2.png "The LLM was 25.7% confident about picking the word 'personally'")
 
-BlitzLab recommendation: _"Replace 'Make it better, clearer, and more professional' with 'Make it clearer and more polished while keeping the author's original voice and tone.' This tells the model to improve without erasing the casual, personal style that makes the opening effective."_
+###### 
+
+**The LLM was \~2% confident about picking the work 'meaningful'**
+
+![The LLM was 1.9% confident about picking the word 'meaningful'](/images/Tokens3.png "The LLM was 1.9% confident about picking the word 'meaningful'")
+
+According to BlitzLab's analysis, this is the core  problem: "The word 'professional' signaled the model (GTP4o mini) to formalize everything, so it kept second-guessing whether to preserve 'no big deal' or upgrade it to corporate language—the low confidence scores show it was genuinely uncertain about whether you wanted the casual tone kept."
+
+**BlitzLab recommendation**: _"Replace 'Make it better, clearer, and more professional' with 'Make it clearer and more polished while keeping the author's original voice and tone.' This tells the model to improve without erasing the casual, personal style that makes the opening effective."_
 
 ## Step 2: Rewrite with constraints
 
-Based on the diagnosis, here's the rewrite:
+Based on the diagnosis, I will use Prompt Designer (a tool on LLMBlitz.io) to improve the prompt we tested. Here is the improved prompt created by Prompt Designer
 
 ```plain
-You are a writing editor. Rewrite the text below to improve clarity and concision 
-while preserving the author's voice and original structure.
+You are a writing assistant. Improve the user's text to make it clearer and more natural while keeping their voice and intent intact. Output only the revised text — no explanations unless asked.
 
-Rules:
-- Do not add headers, bullets, or sections that weren't in the original
-- Do not change the tone — match the formality level of the input
-- Output only the rewritten text, no explanation or commentary
-- If the text is already clear and concise, return it unchanged
+Here are examples of the kind of editing you should do:
+
+**Example A — Personal narrative:**
+Original: "The first story is about connecting the dots. I dropped out of Reed College after the first six months, but then stayed around as a drop-in for another 18 months or so before I really quit."
+Revised: "The first story is about connecting the dots. I dropped out of Reed College after six months, but I stayed on as a drop-in for another 18 months before I finally left."
+→ Tightened phrasing, removed filler words, kept the conversational tone.
+
+**Example B — Professional communication:**
+Original: "We are implementing a new project management system starting next month. The reason for this change is that our current system has become outdated and is not meeting our needs anymore."
+Revised: "Starting next month, we'll be rolling out a new project management system. Our current one is outdated and no longer meeting our needs, so this change will help us work more efficiently."
+→ Reordered for impact, made tone warmer and less corporate, cut redundancy.
+
+Apply this same approach to any text the user provides: tighten, clarify, and polish without changing meaning or adding new content.
 ```
 
-Four changes:
+Changes Made:
 
-1. Replaced vague adjectives with two specific goals ("clarity and concision")
-2. Added explicit constraints on what _not_ to do (the root cause of the voice and structure issues)
-3. Added output format constraint ("only the rewritten text")
-4. Added an edge case handler for already-good text
+1. The instructions and the description of changes are a lot more specific
+2. The new prompt preserves the tone/style of the original text
+3. The new prompt provides examples to help the LLM understand what "good" output looks like
 
 ## Step 3: Test the rewrite empirically
 
-We take the rewritten prompt to Prompt Designer, provide 5 real input examples with expected outputs, and run it against the same model.
+We provide 2 real input examples with expected outputs in Prompt Designer, and run it against the same model.
 
-{/\* SCREENSHOT: Prompt Designer results — ranked candidates with confidence scores \*/}
+![](/images/PromptDesigner.png)
 
-The rewritten prompt scored **84/100** on empirical testing vs **51/100** for the original. More importantly, output variance dropped — the distribution of outputs tightened significantly around what the team actually wanted.
+The rewritten prompt scored **98/100** on empirical testing vs **78/100** for the original. More importantly, output variance dropped — the distribution of outputs tightened significantly around what the team actually wanted.
 
 We also tested two variants generated by Prompt Designer:
 
