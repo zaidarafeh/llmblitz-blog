@@ -1,5 +1,5 @@
 ---
-title: How to Turn an Unpredictable Prompt Into a Production-Ready One
+title: We Cut Our LLM Cost 80%. Here's What It Cost Us. And Why It Was a Good Tradeoff
 description: A step-by-step walkthrough of diagnosing, rewriting, testing, and cost-optimizing a real prompt — from first draft to something you'd actually ship.
 pubDate: 2026-04-10
 tags:
@@ -13,7 +13,7 @@ draft: false
 
 Most prompts begin the same way: someone writes it as an instruction, it mostly works, they ship. Two weeks later it's causing incidents.
 
-Today I will lay out a better way for writing prompts, something you'd put in production with confidence.
+Here are the four-step I use to take a prompt from 'kind of works' to ' Ship It'.
 
 ## The starting prompt
 
@@ -43,7 +43,7 @@ The first thing we do is run this through BlitzLab (a prompt analysis [tool](htt
 
 The finding on the first run: _"The prompt's instruction to 'Make it better, clearer, and more professional' caused the model to systematically replace the user's (Steve Jobs') casual phrasing  with formal alternatives, creating high uncertainty on tokens where informality and formality compete—ex: token 83 '**meaningful**' (2% confidence, with '**simple**' at 30%) show **the model torn between matching the user's conversational tone and elevating to professional language**." This is the stuff that creates variation in LLM output._
 
-**Ex: the LLM was \~2% confident about picking the work 'meaningful'**
+**Ex: the LLM was \~2% confident about picking the word 'meaningful'**
 
 ![The LLM was 1.9% confident about picking the word 'meaningful'](/images/Tokens3.png "The LLM was 1.9% confident about picking the word 'meaningful'")
 
@@ -119,9 +119,9 @@ Before shipping, we wanted to estimate the monthly cost of running our prompt. W
 
 ![](/images/EcoBlitz.png)
 
-**The result**: Notice the **80-81% cost savings we were able to achieve** by rewriting the prompt to optimize for token reduction while model confidence remained at 88%.
+**The result**: We were able to achieve **80-81% cost savings** by rewriting the prompt to optimize for token reduction while model's average token confidence dropped from 98% to 88%. This is a tradeoff that might or might not be worth making, and the best way to tell is to retest the low cost prompt in BlitzLab and see how consistent its responses are. We did that test, and the tradeoff turned out to be worth it, because the prompt produced sufficiently consistent results.
 
-The output token reduction was the big one — the original's vague instructions caused the model to generate longer, more exploratory outputs before settling. The rewritten prompt committed immediately.
+EcoBlitz reduces LLM cost in a numbers of ways. The most straightforward way is including token count restrictions in the prompt (something you can easily add to your prompt). The original prompt did not have a length anchor, so the model defaulted to \~400-token replies. The rewrite says 'Keep your response between 50 and 200 tokens', collapsing the number of tokens by more than half. A variety of other techniques were used as well.
 
 ## The production checklist
 
