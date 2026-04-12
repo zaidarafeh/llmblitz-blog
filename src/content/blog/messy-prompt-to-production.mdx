@@ -47,13 +47,13 @@ The finding on the first run: _"The prompt's instruction to 'Make it better, cle
 
 ![The LLM was 1.9% confident about picking the word 'meaningful'](/images/Tokens3.png "The LLM was 1.9% confident about picking the word 'meaningful'")
 
-According to BlitzLab's analysis report, this is the core  problem: "**The word 'professional' signaled the model (GTP4o mini) to formalize everything, so it kept second-guessing whether to preserve 'no big deal' or upgrade it to corporate language—the low confidence scores show it was genuinely uncertain about whether you wanted the casual tone kept**."
+According to BlitzLab's analysis report, this is the core  problem: "**The word 'professional' signaled the model (GTP-4o mini) to formalize everything, so it kept second-guessing whether to preserve 'no big deal' or upgrade it to corporate language—the low confidence scores show it was genuinely uncertain about whether you wanted the casual tone kept**."
 
 **BlitzLab recommendation**: _"Replace 'Make it better, clearer, and more professional' with 'Make it clearer and more polished while keeping the author's original voice and tone.' This tells the model to improve without erasing the casual, personal style that makes the opening effective."_
 
 ## Step 2: Rewrite with constraints
 
-Based on the diagnosis, we need to rewrite the prompt with more specific instructions that preserve the essence of the input text and with the addition of constraints. (you can grab simple and free templates for writing prompts in BlitzLab's [Template Gallery](http://llmblitz.io/optimize?mode=compare&gallery=1)). Here is a sample I pickd up from the gallery that you can use:
+Based on the diagnosis, we need to rewrite the prompt with more specific instructions that preserve the essence of the input text and with the addition of constraints. (you can grab simple and free templates for writing prompts in BlitzLab's [Template Gallery](https://llmblitz.io/optimize?mode=compare&gallery=1)). Here is a sample I pickd up from the gallery that you can use:
 `## Role:`
 
 `// Describe who the model should act as (e.g. "You are a customer support agent for a SaaS company")`
