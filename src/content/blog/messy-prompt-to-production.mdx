@@ -1,5 +1,5 @@
 ---
-title: We Cut Our LLM Cost 80%. Here's the Tradeoff.
+title: We Cut Our LLM Cost by 80%. Here's the Tradeoff.
 description: A step-by-step walkthrough of diagnosing, rewriting, testing, and cost-optimizing a real prompt — from first draft to something you'd actually ship.
 pubDate: 2026-04-10
 tags:
@@ -11,11 +11,11 @@ toolHref: /optimize
 draft: false
 ---
 
-**TL;DR**: Rewriting a prompt cut its monthly LLM cost by 80% and raised its quality score from 78% to 98%, but the cost-optimized version's token confidence dropped by 10 points. Here's a 4-step process we used, and how to decide if the tradeoff is worth making for your use case.
+**TL;DR**: Rewriting a prompt raised its quality score **from 78% to 98%.** A second rewrite focused on cost cut the monthly LLM cost by a whopping **80%**, but the cost-optimized version's quality score dropped by 10%. Here's a 4-step process we used, and how to decide if the tradeoff is worth making for your use case.
 
 Most prompts begin the same way: someone writes it as an instruction, it mostly works, they ship. Two weeks later it's causing incidents.
 
-Here are the four steps I use to take a prompt from 'kind of works' to 'ship it'.
+Here are the four steps I use to take a prompt from 'kind of works' to 'ship-worthy'.
 
 ## The starting prompt
 
