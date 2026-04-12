@@ -121,7 +121,7 @@ Before shipping, we wanted to estimate the monthly cost of running our prompt. W
 
 **The result**: We were able to achieve **80-81% cost savings** by rewriting the prompt to optimize for token reduction. The cost came in the form of model confidence: BlitzLab's average token confidence (a different metric than the Prompt Designer empirical score above) dropped from 98% to 88%. This is a tradeoff that might or might not be worth making, and the best way to tell is to retest the low cost prompt in BlitzLab and see how consistent its responses are. We did that test, and the tradeoff turned out to be worth it, because the prompt produced sufficiently consistent results.
 
-EcoBlitz reduces LLM cost in a numbers of ways. The most straightforward way is including token count restrictions in the prompt (something you can easily add to your prompt). The original prompt did not have a length anchor, so the model defaulted to \~400-token replies. The rewrite says 'Keep your response between 50 and 200 tokens', collapsing the number of tokens by more than half. A variety of other techniques were used as well.
+EcoBlitz reduces LLM cost in a number of ways. The most straightforward way is including token count restrictions in the prompt (something you can easily add to your prompt). The original prompt did not have a length anchor, so the model defaulted to \~400-token replies. The rewrite says 'Keep your response between 50 and 200 tokens', collapsing the number of tokens by more than half. A variety of other techniques were used as well.
 
 ## The production checklist
 
