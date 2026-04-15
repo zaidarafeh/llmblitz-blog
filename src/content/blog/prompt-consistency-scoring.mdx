@@ -1,0 +1,91 @@
+---
+title: "Does Your Prompt Always Say the Same Thing? How We Measure It."
+description: Most prompt engineers test whether a prompt works. Fewer test whether it works the same way twice. Here's how we built two-dimensional consistency scoring — and why the distinction between text similarity and meaning similarity matters.
+pubDate: 2026-04-15
+tags:
+  - Prompt Engineering
+  - Production
+  - LLM Evaluation
+tool: BlitzLab
+toolHref: /optimize
+draft: true
+---
+
+Most prompt engineers test whether a prompt works. Fewer test whether it works the *same way* twice.
+
+That gap is what breaks production systems. A prompt that produces correct output 95% of the time sounds fine — until you realize the other 5% silently breaks a downstream parser, fails a regex match, or sends a customer the wrong thing.
+
+Consistency isn't a nice-to-have. For production prompts, it's a correctness requirement.
+
+## The problem with eyeballing output
+
+The standard approach is to run a prompt a few times, read the outputs, and decide they look similar enough. This works for detecting obvious instability but misses the cases that actually cause incidents:
+
+- The model always gives you the right answer, but sometimes as a bullet list and sometimes as a paragraph
+- The wording varies just enough that a JSON parser chokes on one of five runs
+- The output length swings between 40 and 400 tokens depending on token-level chance decisions early in the generation
+
+None of these look broken when you're reading them. They look broken when they're in production at 10,000 calls a day.
+
+## Two types of consistency
+
+When we built consistency scoring into LLMBlitz, we realized there are actually two different things people mean when they say a prompt is "consistent":
+
+**Text similarity** — Do the outputs use the same words? This is what matters when downstream systems parse the output. A regex, a JSON parser, a classifier trained on your outputs — all of these care about literal wording, not intent.
+
+**Meaning similarity** — Do the outputs convey the same idea? This is what matters when a human reads the output. Two sentences that use different words but say the same thing are perfectly consistent for a customer-facing use case.
+
+These two measures can diverge significantly — and when they do, it tells you something specific and actionable.
+
+## How we compute each
+
+**Text similarity** uses the Dice coefficient — a word-overlap measure:
+
+```
+Dice(A, B) = 2 × |words(A) ∩ words(B)| / (|words(A)| + |words(B)|)
+```
+
+It's simple, fast, costs nothing, and is exactly right for the use case. If two outputs share 90% of their words, a downstream parser will probably handle both. If they share 40%, it probably won't.
+
+**Meaning similarity** uses cosine similarity on text embeddings (OpenAI's `text-embedding-3-small`). Each output is converted into a 1536-dimensional vector representing its semantic content, and we measure the angle between the two vectors. Outputs that mean the same thing cluster together regardless of wording.
+
+## What the combination tells you
+
+| Text similarity | Meaning similarity | What it means |
+|---|---|---|
+| High | High | Maximally consistent — safe for any use case |
+| **Low** | **High** | Same meaning, different words — fine for humans, needs format constraints for parsers |
+| Low | Low | Genuinely inconsistent — the prompt needs work |
+
+The interesting case is the middle row. A prompt with 60% text similarity and 90% meaning similarity isn't broken — it's just underspecified for structured output use cases. The fix is surgical: add a format constraint. Without both scores, you'd either accept it (if you only looked at meaning) or panic (if you only looked at text).
+
+## What drives inconsistency
+
+Temperature is the biggest lever. At `temperature=1.0`, the model samples from a wide probability distribution at each token. Early token choices cascade — if the model opens with "The" vs "A" vs "Here's", the entire output diverges from that branch.
+
+But temperature isn't the whole story. We also surface **avg token confidence** from the logprobs — the probability the model assigned to each token it actually generated. Low average confidence means the model was genuinely uncertain at many decision points, which predicts high variance even at moderate temperatures.
+
+Our heuristic consistency estimate combines both:
+
+```
+score = temperature_factor × 0.6 + avg_confidence × 0.4
+```
+
+This gives you an instant estimate before you've run a single additional call. The empirical check (actually running the prompt twice and comparing) gives you the ground truth.
+
+## The fix
+
+When consistency is low, the interventions are predictable:
+
+1. **Lower temperature** — the single highest-leverage change. `temperature=0` is maximally deterministic.
+2. **Add explicit format constraints** — "respond in exactly one sentence", "return only the classification label", "always use bullet points". The model follows these reliably.
+3. **Replace open-ended phrasing** — "describe", "explain", "discuss" invite variable-length, variable-structure responses. "List exactly 3 reasons" doesn't.
+4. **Constrain output length** — `max_tokens` is a hard cap, but prompting for a specific length ("in 50 words or fewer") also reduces variance by eliminating the model's choices about when to stop.
+
+## Try it
+
+Run any prompt in [BlitzLab](/optimize) and click **Test consistency** in the findings bar after your first run. You'll get both scores, a verdict, and a specific recommendation based on the combination.
+
+If text similarity is low but meaning similarity is high, you'll see: *"Outputs convey the same intent but are worded differently — add an explicit format constraint if downstream systems parse this output."*
+
+That's the kind of signal that turns a debugging session into a one-line prompt fix.
