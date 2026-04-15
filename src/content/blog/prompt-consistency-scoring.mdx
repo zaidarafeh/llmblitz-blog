@@ -1,5 +1,5 @@
 ---
-title: "Does Your Prompt Always Say the Same Thing? How We Measure It."
+title: Why Your Prompt Returns Different Results Every Run — And How to Fix It
 description: Most prompt engineers test whether a prompt works. Fewer test whether it works the same way twice. Here's how we built two-dimensional consistency scoring — and why the distinction between text similarity and meaning similarity matters.
 pubDate: 2026-04-15
 tags:
@@ -11,7 +11,7 @@ toolHref: /optimize
 draft: true
 ---
 
-Most prompt engineers test whether a prompt works. Fewer test whether it works the *same way* twice.
+Most prompt engineers test whether a prompt works. Fewer test whether it works the _same way_ twice.
 
 That gap is what breaks production systems. A prompt that produces correct output 95% of the time sounds fine — until you realize the other 5% silently breaks a downstream parser, fails a regex match, or sends a customer the wrong thing.
 
@@ -41,7 +41,7 @@ These two measures can diverge significantly — and when they do, it tells you 
 
 **Text similarity** uses the Dice coefficient — a word-overlap measure:
 
-```
+```plain
 Dice(A, B) = 2 × |words(A) ∩ words(B)| / (|words(A)| + |words(B)|)
 ```
 
@@ -52,7 +52,7 @@ It's simple, fast, costs nothing, and is exactly right for the use case. If two 
 ## What the combination tells you
 
 | Text similarity | Meaning similarity | What it means |
-|---|---|---|
+| --- | --- | --- |
 | High | High | Maximally consistent — safe for any use case |
 | **Low** | **High** | Same meaning, different words — fine for humans, needs format constraints for parsers |
 | Low | Low | Genuinely inconsistent — the prompt needs work |
@@ -67,7 +67,7 @@ But temperature isn't the whole story. We also surface **avg token confidence** 
 
 Our heuristic consistency estimate combines both:
 
-```
+```plain
 score = temperature_factor × 0.6 + avg_confidence × 0.4
 ```
 
@@ -86,6 +86,6 @@ When consistency is low, the interventions are predictable:
 
 Run any prompt in [BlitzLab](/optimize) and click **Test consistency** in the findings bar after your first run. You'll get both scores, a verdict, and a specific recommendation based on the combination.
 
-If text similarity is low but meaning similarity is high, you'll see: *"Outputs convey the same intent but are worded differently — add an explicit format constraint if downstream systems parse this output."*
+If text similarity is low but meaning similarity is high, you'll see: _"Outputs convey the same intent but are worded differently — add an explicit format constraint if downstream systems parse this output."_
 
 That's the kind of signal that turns a debugging session into a one-line prompt fix.
