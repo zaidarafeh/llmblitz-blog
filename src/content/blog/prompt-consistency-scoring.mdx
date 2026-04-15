@@ -32,15 +32,15 @@ None of these look broken when you're reading them. They look broken when they'r
 
 When we built consistency scoring into [LLMBlitz](https://LLMBlitz.io), we realized there are actually two different things people mean when they say a prompt is "consistent":
 
-**Text similarity** — Do the outputs use the same words? This is what matters when downstream systems parse the output. A regex, a JSON parser, a classifier trained on your outputs — all of these care about literal wording, not intent.
+**Text consistency** — Do the outputs use the same words? This is what matters when downstream systems parse the output. A regex, a JSON parser, a classifier trained on your outputs — all of these care about literal wording, not intent.
 
-**Meaning similarity** — Do the outputs convey the same idea? This is what matters when a human reads the output. Two sentences that use different words but say the same thing are perfectly consistent for a customer-facing use case.
+**Meaning consistency** — Do the outputs convey the same idea? This is what matters when a human reads the output. Two sentences that use different words but say the same thing are perfectly consistent for a customer-facing use case.
 
 These two measures can diverge significantly — and when they do, it tells you something specific and actionable.
 
-[![Text Similarity vs Meaning similarity in BlitzLab](/images/Consistency%20vs%20Similarity.png "Text Similarity vs Meaning similarity in BlitzLab")](https://llmblitz.io)
+[![Text Consistency vs Meaning Consistency in BlitzLab](/images/Consistency%20vs%20Similarity.png "Text Consistency vs Meaning Consistency in BlitzLab")](https://llmblitz.io)
 
-Figure 1: Text Similarity vs Meaning Similarity Scores in BlitzLab
+Figure 1: Text Consistency vs Meaning Consistency Scores in BlitzLab
 
 ## How we compute each
 
@@ -52,7 +52,7 @@ Dice(A, B) = 2 × |words(A) ∩ words(B)| / (|words(A)| + |words(B)|)
 
 It's simple, fast, costs nothing, and is exactly right for the use case. If two outputs share 90% of their words, a downstream parser will probably handle both. If they share 40%, it probably won't.
 
-**Meaning similarity** uses cosine similarity on text embeddings (OpenAI's `text-embedding-3-small`). Each output is converted into a 1536-dimensional vector representing its semantic content, and we measure the angle between the two vectors. Outputs that mean the same thing cluster together regardless of wording.
+**Meaning consistency** uses cosine similarity on text embeddings (OpenAI's `text-embedding-3-small`). Each output is converted into a 1536-dimensional vector representing its semantic content, and we measure the angle between the two vectors. Outputs that mean the same thing cluster together regardless of wording.
 
 [![Response consistency score in BlitzLab](/images/Consistency.png "Response consistency score in BlitzLab")](https://llmblitz.io)
 
