@@ -6,6 +6,7 @@ tags:
   - Prompt Engineering
   - Production
   - LLM Evaluation
+  - LLM Response Similarity
 tool: BlitzLab
 toolHref: /optimize
 draft: true
@@ -39,6 +40,8 @@ These two measures can diverge significantly — and when they do, it tells you 
 
 [![Text Similarity vs Meaning similarity in BlitzLab](/images/Consistency%20vs%20Similarity.png "Text Similarity vs Meaning similarity in BlitzLab")](https://llmblitz.io)
 
+Figure 1: Text Similarity vs Meaning Similarity Scores in BlitzLab
+
 ## How we compute each
 
 **Text similarity** uses the Dice coefficient — a word-overlap measure:
@@ -50,6 +53,10 @@ Dice(A, B) = 2 × |words(A) ∩ words(B)| / (|words(A)| + |words(B)|)
 It's simple, fast, costs nothing, and is exactly right for the use case. If two outputs share 90% of their words, a downstream parser will probably handle both. If they share 40%, it probably won't.
 
 **Meaning similarity** uses cosine similarity on text embeddings (OpenAI's `text-embedding-3-small`). Each output is converted into a 1536-dimensional vector representing its semantic content, and we measure the angle between the two vectors. Outputs that mean the same thing cluster together regardless of wording.
+
+[![Response consistency score in BlitzLab](/images/Consistency.png "Response consistency score in BlitzLab")](https://llmblitz.io)
+
+Figure 2: The Response Consistency score in BlitzLab
 
 ## What the combination tells you
 
