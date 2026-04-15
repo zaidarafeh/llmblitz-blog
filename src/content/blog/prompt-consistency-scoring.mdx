@@ -29,13 +29,15 @@ None of these look broken when you're reading them. They look broken when they'r
 
 ## Two types of consistency
 
-When we built consistency scoring into LLMBlitz, we realized there are actually two different things people mean when they say a prompt is "consistent":
+When we built consistency scoring into [LLMBlitz](https://LLMBlitz.io), we realized there are actually two different things people mean when they say a prompt is "consistent":
 
 **Text similarity** — Do the outputs use the same words? This is what matters when downstream systems parse the output. A regex, a JSON parser, a classifier trained on your outputs — all of these care about literal wording, not intent.
 
 **Meaning similarity** — Do the outputs convey the same idea? This is what matters when a human reads the output. Two sentences that use different words but say the same thing are perfectly consistent for a customer-facing use case.
 
 These two measures can diverge significantly — and when they do, it tells you something specific and actionable.
+
+[![Text Similarity vs Meaning similarity in BlitzLab](/images/Consistency%20vs%20Similarity.png "Text Similarity vs Meaning similarity in BlitzLab")](https://llmblitz.io)
 
 ## How we compute each
 
@@ -65,11 +67,7 @@ Temperature is the biggest lever. At `temperature=1.0`, the model samples from a
 
 But temperature isn't the whole story. We also surface **avg token confidence** from the logprobs — the probability the model assigned to each token it actually generated. Low average confidence means the model was genuinely uncertain at many decision points, which predicts high variance even at moderate temperatures.
 
-Our heuristic consistency estimate combines both:
-
-```plain
-score = temperature_factor × 0.6 + avg_confidence × 0.4
-```
+Our heuristic consistency estimate combines both.
 
 This gives you an instant estimate before you've run a single additional call. The empirical check (actually running the prompt twice and comparing) gives you the ground truth.
 
