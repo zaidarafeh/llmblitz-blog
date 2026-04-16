@@ -1,6 +1,6 @@
 ---
 title: Why Your Prompt Returns Different Results Every Run — And 10 Things You can Do to Fix It
-description: Most prompt engineers test whether a prompt works. Fewer test whether it works the same way twice. Here's how we built two-dimensional consistency scoring — and why the distinction between text similarity and meaning similarity matters.
+description: Most prompt engineers test whether a prompt works. Fewer test whether it works the same way twice. Here's how we built three-dimensional consistency scoring — and why the distinction between structure, text, and meaning matters.
 pubDate: 2026-04-15
 tags:
   - Prompt Engineering
@@ -28,15 +28,17 @@ The standard approach is to run a prompt a few times, read the outputs, and deci
 
 None of these look broken when you're reading them. They look broken when they're in production at 10,000 calls a day.
 
-## Two types of consistency
+## Three types of consistency
 
-When we built consistency scoring into [LLMBlitz](https://LLMBlitz.io), we realized there are actually two different things people mean when they say a prompt is "consistent":
+When we built consistency scoring into [LLMBlitz](https://LLMBlitz.io), we realized there are actually three different things people mean when they say a prompt is "consistent":
 
-**Text consistency** — Do the outputs use the same words? This is what matters when downstream systems parse the output. A regex, a JSON parser, a classifier trained on your outputs — all of these care about literal wording, not intent.
+**Structural consistency** — Do the outputs have the same shape? This is what matters most for data workflows. A prompt that returns JSON four times and a bullet list on the fifth run will break your pipeline — even if the content is correct every time. Structure means: same format type, same keys present, same nesting depth, same number of items.
+
+**Text consistency** — Do the outputs use the same words? This is what matters when downstream systems do exact matching on the output. A regex, a template matcher, a classifier trained on your outputs — all of these care about literal wording, not intent.
 
 **Meaning consistency** — Do the outputs convey the same idea? This is what matters when a human reads the output. Two sentences that use different words but say the same thing are perfectly consistent for a customer-facing use case.
 
-These two measures can diverge significantly — and when they do, it tells you something specific and actionable.
+These three measures can diverge significantly — and when they do, the combination tells you something specific and actionable.
 
 [![Text Consistency vs Meaning Consistency in BlitzLab](/images/Consistency%20vs%20Similarity.png "Text Consistency vs Meaning Consistency in BlitzLab")](https://llmblitz.io)
 
@@ -44,7 +46,9 @@ Figure 1: Text Consistency vs Meaning Consistency Scores in BlitzLab
 
 ## How we compute each
 
-**Text similarity** uses the Dice coefficient — a word-overlap measure:
+**Structural consistency** uses format-class detection. We classify each output into a format type — valid JSON, bullet list, numbered list, single-line response, multi-paragraph prose — and check whether all runs produce the same type. For JSON outputs, we go further: we compare the key structure and value types across runs. If every run returns `{"name": string, "age": number}`, structural consistency is perfect even if the values differ completely. This check is fast, deterministic, and catches the failure mode that actually kills pipelines.
+
+**Text consistency** uses the Dice coefficient — a word-overlap measure:
 
 ```plain
 Dice(A, B) = 2 × |words(A) ∩ words(B)| / (|words(A)| + |words(B)|)
@@ -60,13 +64,15 @@ Figure 2: The Response Consistency score in BlitzLab
 
 ## What the combination tells you
 
-| Text similarity | Meaning similarity | What it means |
-| --- | --- | --- |
-| High | High | Maximally consistent — safe for any use case |
-| **Low** | **High** | Same meaning, different words — fine for humans, needs format constraints for parsers |
-| Low | Low | Genuinely inconsistent — the prompt needs work |
+| Structure | Text | Meaning | What it means |
+| --- | --- | --- | --- |
+| High | High | High | Maximally consistent — safe for any use case |
+| High | Low | High | Same shape, same idea, different wording — ideal for data workflows where a parser handles the structure and the content just needs to be correct |
+| **Low** | Low | High | Same meaning, but the format shifts between runs — the most dangerous case for pipelines. The model knows what to say but not how to shape it. Add a format constraint. |
+| High | High | Low | Same structure and wording, different meaning — rare, but it means the model is confidently templating different answers into the same shape. Check whether the prompt is ambiguous. |
+| Low | Low | Low | Genuinely inconsistent — the prompt needs fundamental work |
 
-The interesting case is the middle row. A prompt with 60% text similarity and 90% meaning similarity isn't broken — it's just underspecified for structured output use cases. The fix is surgical: add a format constraint. Without both scores, you'd either accept it (if you only looked at meaning) or panic (if you only looked at text).
+The most actionable row is the third one. A prompt where structural consistency is low but meaning consistency is high isn't broken — it's underspecified. The model has the right answer but no instructions on how to package it. The fix is surgical: add a format constraint or use a structured output mode. Without all three scores, you'd miss this — text consistency alone would panic, meaning consistency alone would pass it.
 
 ## What drives inconsistency
 
@@ -82,7 +88,7 @@ This gives you an instant estimate before you've run a single additional call. T
 
 When consistency is low, the interventions are predictable:
 
-1. **Lower temperature** — the highest-leverage change on the model parameters side is setting `temperature=0`. This setting makes makes token selection greedy (always pick the most probable next token), which is the strongest single lever for reducing output variability. It does not guarantee byte‑identical results across calls due to floating‑point non‑determinism and infrastructure differences, but in practice it gets you very close. Reasons why some variance remains:
+1. **Lower temperature** — the highest-leverage change on the model parameters side is setting `temperature=0`. This setting makes token selection greedy (always pick the most probable next token), which is the strongest single lever for reducing output variability. It does not guarantee byte‑identical results across calls due to floating‑point non‑determinism and infrastructure differences, but in practice it gets you very close. Reasons why some variance remains:
     - GPU floating‑point non‑determinism (batching, parallelism) can cause tiny logit differences that flip ties.
     - OpenAI has explicitly noted that temperature=0 may not produce byte‑identical results across requests.
     - Model version updates (silent or announced) change weights entirely.
@@ -105,8 +111,8 @@ When consistency is low, the interventions are predictable:
 
 ## Try it
 
-Run any prompt in [BlitzLab](/optimize) and click **Test consistency** in the findings bar after your first run. You'll get both scores, a verdict, and a specific recommendation based on the combination.
+Run any prompt in [BlitzLab](/optimize) and click **Test consistency** in the findings bar after your first run. You'll get all three scores, a verdict, and a specific recommendation based on the combination.
 
-If text similarity is low but meaning similarity is high, you'll see: _"Outputs convey the same intent but are worded differently — add an explicit format constraint if downstream systems parse this output."_
+If structural consistency is low but meaning consistency is high, you'll see: _"Outputs convey the same intent but the format shifts between runs — add an explicit format constraint to stabilize the output shape for downstream consumers."_
 
 That's the kind of signal that turns a debugging session into a one-line prompt fix.
