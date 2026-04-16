@@ -46,6 +46,50 @@ const bodyHtml = toHTML(body ?? [], {
       callout: ({ value }: any) =>
         `<div class="callout callout--${value.style ?? 'info'}">${escapeHtml(value.content ?? '')}</div>`,
 
+      heroImage: ({ value }: any) => {
+        const src = value.image?.asset?.url ?? '';
+        const alt = escapeHtml(value.alt ?? '');
+        const heights: Record<string, string> = { small: '300px', medium: '480px', large: '640px' };
+        const h = heights[value.height ?? 'medium'];
+        const overlay = (value.title || value.subtitle) ? `
+          <div class="hero-overlay">
+            ${value.title    ? `<div class="hero-overlay-title">${escapeHtml(value.title)}</div>`    : ''}
+            ${value.subtitle ? `<div class="hero-overlay-sub">${escapeHtml(value.subtitle)}</div>` : ''}
+          </div>` : '';
+        return `<div class="hero-image" style="height:${h}">
+          <img src="${src}" alt="${alt}" loading="lazy" />
+          ${overlay}
+        </div>`;
+      },
+
+      imagePair: ({ value }: any) => {
+        const renderSide = (side: any) => {
+          if (!side?.image?.asset?.url) return '<div class="image-pair-side"></div>';
+          const caption = side.caption ? `<figcaption>${escapeHtml(side.caption)}</figcaption>` : '';
+          return `<figure class="image-pair-side">
+            <img src="${side.image.asset.url}" alt="${escapeHtml(side.alt ?? '')}" loading="lazy" />
+            ${caption}
+          </figure>`;
+        };
+        return `<div class="image-pair">${renderSide(value.left)}${renderSide(value.right)}</div>`;
+      },
+
+      imageText: ({ value }: any) => {
+        const src = value.image?.asset?.url ?? '';
+        const reversed = value.imagePosition === 'right' ? ' image-text--reversed' : '';
+        const btn = value.button?.label && value.button?.href
+          ? `<a href="${value.button.href}" class="image-text-btn"${value.button.newTab ? ' target="_blank" rel="noopener"' : ''}>${escapeHtml(value.button.label)}</a>`
+          : '';
+        return `<div class="image-text${reversed}">
+          <div class="image-text-img"><img src="${src}" alt="${escapeHtml(value.alt ?? '')}" loading="lazy" /></div>
+          <div class="image-text-body">
+            ${value.heading ? `<h3>${escapeHtml(value.heading)}</h3>` : ''}
+            ${value.body    ? `<p>${escapeHtml(value.body)}</p>`      : ''}
+            ${btn}
+          </div>
+        </div>`;
+      },
+
       ImageTextBlockType: ({ value }: any) => {
         const img = value.mainImage?.asset?.url
           ? `<img src="${value.mainImage.asset.url}" alt="${escapeHtml(value.mainImage.alt ?? '')}" loading="lazy" />`

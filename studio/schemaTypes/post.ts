@@ -98,6 +98,123 @@ export const postType = defineType({
           },
         },
 
+        // ── Hero Image ────────────────────────────────────────────────
+        {
+          name:  'heroImage',
+          title: 'Hero Image',
+          type:  'object',
+          fields: [
+            {
+              name:     'image',
+              title:    'Image',
+              type:     'image',
+              options:  { hotspot: true },
+              validation: (Rule: any) => Rule.required(),
+            },
+            { name: 'alt',      title: 'Alt text',          type: 'string' },
+            { name: 'title',    title: 'Overlay title',     type: 'string' },
+            { name: 'subtitle', title: 'Overlay subtitle',  type: 'string' },
+            {
+              name:    'height',
+              title:   'Height',
+              type:    'string',
+              options: {
+                list: [
+                  { title: 'Small (300px)',  value: 'small'  },
+                  { title: 'Medium (480px)', value: 'medium' },
+                  { title: 'Large (640px)',  value: 'large'  },
+                ],
+                layout: 'radio',
+              },
+              initialValue: 'medium',
+            },
+          ],
+          preview: {
+            select: { media: 'image', title: 'title', subtitle: 'height' },
+            prepare({ media, title, subtitle }: any) {
+              return { media, title: `Hero: ${title || 'untitled'}`, subtitle };
+            },
+          },
+        },
+
+        // ── Image Pair (side by side) ─────────────────────────────────
+        {
+          name:  'imagePair',
+          title: 'Image Pair',
+          type:  'object',
+          fields: [
+            {
+              name:  'left',
+              title: 'Left image',
+              type:  'object',
+              fields: [
+                { name: 'image',   type: 'image', options: { hotspot: true } },
+                { name: 'alt',     type: 'string', title: 'Alt text'  },
+                { name: 'caption', type: 'string', title: 'Caption'   },
+              ],
+            },
+            {
+              name:  'right',
+              title: 'Right image',
+              type:  'object',
+              fields: [
+                { name: 'image',   type: 'image', options: { hotspot: true } },
+                { name: 'alt',     type: 'string', title: 'Alt text'  },
+                { name: 'caption', type: 'string', title: 'Caption'   },
+              ],
+            },
+          ],
+          preview: {
+            select: { media: 'left.image' },
+            prepare({ media }: any) {
+              return { media, title: 'Image Pair' };
+            },
+          },
+        },
+
+        // ── Image + Text ──────────────────────────────────────────────
+        {
+          name:  'imageText',
+          title: 'Image + Text',
+          type:  'object',
+          fields: [
+            {
+              name:    'image',
+              title:   'Image',
+              type:    'image',
+              options: { hotspot: true },
+              validation: (Rule: any) => Rule.required(),
+            },
+            { name: 'alt',      title: 'Alt text',  type: 'string' },
+            { name: 'heading',  title: 'Heading',   type: 'string' },
+            { name: 'body',     title: 'Body text', type: 'text', rows: 4 },
+            {
+              name:  'button',
+              title: 'Button (optional)',
+              type:  'object',
+              fields: [
+                { name: 'label', title: 'Label', type: 'string' },
+                { name: 'href',  title: 'URL',   type: 'url',
+                  validation: (Rule: any) => Rule.uri({ allowRelative: true, scheme: ['http','https'] }) },
+                { name: 'newTab', title: 'Open in new tab', type: 'boolean', initialValue: false },
+              ],
+            },
+            {
+              name:         'imagePosition',
+              title:        'Image position',
+              type:         'string',
+              options:      { list: [{ title: 'Left', value: 'left' }, { title: 'Right', value: 'right' }], layout: 'radio' },
+              initialValue: 'left',
+            },
+          ],
+          preview: {
+            select: { media: 'image', title: 'heading', subtitle: 'imagePosition' },
+            prepare({ media, title, subtitle }: any) {
+              return { media, title: `Image+Text: ${title || 'untitled'}`, subtitle };
+            },
+          },
+        },
+
         // ── Image (with optional caption + link) ─────────────────────
         {
           name:  'imageBlock',
