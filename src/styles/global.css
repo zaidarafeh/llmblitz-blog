@@ -332,6 +332,54 @@ body {
 
 .post-body a:hover { color: #1558b0; }
 
+/* ── Tables ── */
+.post-body .table-wrapper {
+  overflow-x: auto;
+  margin: 28px 0;
+}
+.post-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.post-body thead {
+  background: #f3f4f6;
+}
+.post-body th {
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: #111;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+.post-body td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+  vertical-align: top;
+}
+.post-body tr:last-child td { border-bottom: none; }
+.post-body tr:hover td { background: #fafafa; }
+
+/* ── Images ── */
+.post-body .post-image {
+  margin: 28px 0;
+  text-align: center;
+}
+.post-body .post-image img {
+  max-width: 100%;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+.post-body .post-image figcaption {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  font-style: italic;
+}
+
 /* ── CTA card ── */
 .post-cta {
   margin-top: 48px;

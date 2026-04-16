@@ -42,8 +42,29 @@ const bodyHtml = toHTML(body ?? [], {
     types: {
       codeBlock: ({ value }: any) =>
         `<pre class="code-block" data-lang="${value.language ?? 'text'}"><code>${escapeHtml(value.code ?? '')}</code></pre>`,
+
       callout: ({ value }: any) =>
         `<div class="callout callout--${value.style ?? 'info'}">${escapeHtml(value.content ?? '')}</div>`,
+
+      imageBlock: ({ value }: any) => {
+        const src = value.image?.asset?.url ?? '';
+        const alt = escapeHtml(value.alt ?? '');
+        const caption = value.caption ? `<figcaption>${escapeHtml(value.caption)}</figcaption>` : '';
+        const img = `<img src="${src}" alt="${alt}" loading="lazy" />`;
+        const inner = value.href ? `<a href="${value.href}" target="_blank" rel="noopener">${img}</a>` : img;
+        return `<figure class="post-image">${inner}${caption}</figure>`;
+      },
+
+      table: ({ value }: any) => {
+        const rows: any[] = value.rows ?? [];
+        if (!rows.length) return '';
+        const [head, ...body] = rows;
+        const thCells = (head?.cells ?? []).map((c: string) => `<th>${escapeHtml(c)}</th>`).join('');
+        const bodyRows = body.map((row: any) =>
+          `<tr>${(row.cells ?? []).map((c: string) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`
+        ).join('');
+        return `<div class="table-wrapper"><table><thead><tr>${thCells}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
+      },
     },
     marks: {
       link: ({ children, value }: any) => {
