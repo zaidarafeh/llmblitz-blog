@@ -1,36 +1,36 @@
 ---
-title: Why Your Prompt Returns Different Results Every Run — And 10 Things You can Do to Fix It
-description: Most prompt engineers test whether a prompt works. Fewer test whether it works the same way twice. Here's how we built three-dimensional consistency scoring — and why the distinction between structure, text, and meaning matters.
+title: Why Your Prompt Returns Different Results On Every Run — And 10 Things You can Do to Fix It
+description: Most AI Builders test whether a prompt works. Few test whether it works the same way consistently. Here's how we designed and built three-dimensional consistency scoring — and why the distinction between structure, text, and meaning matters.
 pubDate: 2026-04-15
 tags:
   - Prompt Engineering
   - Production
   - LLM Evaluation
   - LLM Response Similarity
-tool: BlitzLab
+tool: BlitzLab, Prompt Designer
 toolHref: /optimize
 draft: true
 ---
 
-Most prompt engineers test whether a prompt works. Fewer test whether it works the _same way_ consistently.
+Most AI builders test whether a prompt works. Few test whether the prompt works the _same way_ consistently.
 
-That gap is what breaks production systems. A prompt that produces correct output 95% of the time sounds fine — until you realize the other 5% silently breaks a downstream parser, fails a regex match, or sends a customer the wrong thing.
+This gap is what breaks production systems. A prompt that produces correct output 95% of the time sounds OK — until you realize that the other 5% it silently breaks a downstream parser, fails a regex match, or sends a customer a query instead of the needed data.
 
 Consistency isn't a nice-to-have. For production prompts, it's a correctness requirement.
 
 ## The problem with eyeballing output
 
-The standard approach is to run a prompt a few times, read the outputs, and decide they look similar enough. This works for detecting obvious instability but misses the cases that actually cause incidents:
+The standard approach is to run a prompt a few times, read the outputs, and decide if the outputs look similar enough. This works for detecting obvious instability but misses the cases that actually cause incidents:
 
 - The model always gives you the right answer, but sometimes as a bullet list and sometimes as a paragraph
 - The wording varies just enough that a JSON parser chokes on one of five runs
 - The output length swings between 40 and 400 tokens depending on token-level chance decisions early in the generation
 
-None of these look broken when you're reading them. They look broken when they're in production at 10,000 calls a day.
+None of these cases look broken when you're eyeballing them. They look broken when they're in production at 10,000 calls a day.
 
 ## Three types of consistency
 
-When we built consistency scoring into [LLMBlitz](https://LLMBlitz.io), we realized there are actually three different things people mean when they say a prompt is "consistent":
+When we built consistency scoring into [LLMBlitz](https://LLMBlitz.io), we realized there are actually three different concepts that people refer to when they say a prompt output is "consistent":
 
 **Structural consistency** — Do the outputs have the same shape? This is what matters most for data workflows. A prompt that returns JSON four times and a bullet list on the fifth run will break your pipeline — even if the content is correct every time. Structure means: same format type, same keys present, same nesting depth, same number of items.
 
