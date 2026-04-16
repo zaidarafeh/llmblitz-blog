@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@multidots/sanity-plugin-image-text-block": "^1.0.4",
+    "@sanity/color-input": "^6.0.4",
     "@sanity/vision": "^5.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
