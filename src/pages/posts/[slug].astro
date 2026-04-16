@@ -55,15 +55,27 @@ const bodyHtml = toHTML(body ?? [], {
         return `<figure class="post-image">${inner}${caption}</figure>`;
       },
 
-      table: ({ value }: any) => {
+      richTableBlock: ({ value }: any) => {
         const rows: any[] = value.rows ?? [];
+        const headers: any[] = value.columnHeaders ?? [];
+        const hasColTitles = value.hasColumnTitles && headers.length > 0;
         if (!rows.length) return '';
-        const [head, ...body] = rows;
-        const thCells = (head?.cells ?? []).map((c: string) => `<th>${escapeHtml(c)}</th>`).join('');
-        const bodyRows = body.map((row: any) =>
-          `<tr>${(row.cells ?? []).map((c: string) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`
-        ).join('');
-        return `<div class="table-wrapper"><table><thead><tr>${thCells}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
+
+        const renderCell = (cell: any) =>
+          cell?.content?.length ? toHTML(cell.content, { components: {} }) : '';
+
+        let thead = '';
+        if (hasColTitles) {
+          const ths = headers.map((h: any) => `<th>${escapeHtml(h.title ?? '')}</th>`).join('');
+          thead = `<thead><tr>${ths}</tr></thead>`;
+        }
+
+        const bodyRows = rows.map((row: any) => {
+          const cells = (row.cells ?? []).map((cell: any) => `<td>${renderCell(cell)}</td>`).join('');
+          return `<tr>${cells}</tr>`;
+        }).join('');
+
+        return `<div class="table-wrapper"><table>${thead}<tbody>${bodyRows}</tbody></table></div>`;
       },
     },
     marks: {

@@ -135,47 +135,8 @@ export const postType = defineType({
           },
         },
 
-        // ── Table (custom v3-native implementation) ───────────────────
-        {
-          name:  'table',
-          title: 'Table',
-          type:  'object',
-          fields: [
-            {
-              name:  'rows',
-              title: 'Rows (first row = header)',
-              type:  'array',
-              of: [
-                {
-                  name:  'tableRow',
-                  title: 'Row',
-                  type:  'object',
-                  fields: [
-                    {
-                      name:  'cells',
-                      title: 'Cells',
-                      type:  'array',
-                      of:    [{ type: 'string' }],
-                    },
-                  ],
-                  preview: {
-                    select: { cells: 'cells' },
-                    prepare({ cells }: { cells: string[] }) {
-                      return { title: (cells ?? []).join(' | ') };
-                    },
-                  },
-                },
-              ],
-            },
-          ],
-          preview: {
-            select: { rows: 'rows' },
-            prepare({ rows }: { rows: any[] }) {
-              const count = rows?.length ?? 0;
-              return { title: `Table (${count} row${count === 1 ? '' : 's'})` };
-            },
-          },
-        },
+        // ── Rich Table (sanity-plugin-rich-table, v5 compatible) ─────
+        { type: 'richTableBlock' },
 
         // ── Code block ────────────────────────────────────────────────
         {

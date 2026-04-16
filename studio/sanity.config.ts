@@ -1,6 +1,7 @@
 import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
 import { visionTool } from '@sanity/vision';
+import { richTablePlugin } from 'sanity-plugin-rich-table';
 import { schemaTypes } from './schemaTypes';
 
 export default defineConfig({
@@ -11,6 +12,7 @@ export default defineConfig({
   plugins: [
     structureTool(),
     visionTool(),
+    richTablePlugin({}),
   ],
   schema: { types: schemaTypes },
 });
