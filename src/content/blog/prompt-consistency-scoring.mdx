@@ -89,23 +89,29 @@ This gives you an instant estimate before you've run a single additional call. T
 When consistency is low, the interventions are predictable:
 
 1. **Lower temperature** — the highest-leverage change on the model parameters side is setting `temperature=0`. This setting makes token selection greedy (always pick the most probable next token), which is the strongest single lever for reducing output variability. It does not guarantee byte‑identical results across calls due to floating‑point non‑determinism and infrastructure differences, but in practice it gets you very close. Reasons why some variance remains:
+
     - GPU floating‑point non‑determinism (batching, parallelism) can cause tiny logit differences that flip ties.
     - OpenAI has explicitly noted that temperature=0 may not produce byte‑identical results across requests.
     - Model version updates (silent or announced) change weights entirely.
+
 2. **Set a seed** — many providers expose a seed parameter that biases the model toward the same token choices across runs at a given temperature. Unlike temperature=0, a seed lets you reduce variance without fully removing variability (i.e. creativity) — useful when the task still needs some creativity but the output structure has to be stable. Note that seed support is provider-specific (OpenAI exposes it; Anthropic does not as of this writing), and it's a strong hint rather than a guarantee — the same seed can produce different output if the model version changes.
 3. **Add explicit format constraints** — "respond in exactly one sentence", "return only the classification label", "always use bullet points". The model follows these near reliably.
 4. **Replace open-ended phrasing** — "describe", "explain", "discuss" invite variable-length, variable-structure responses. "List exactly 3 reasons" doesn't.
 5. **Constrain output length** — `max_tokens`is a hard truncation cap — the model doesn't plan around it, so output may be cut off mid‑structure. For cleaner results, prompt for a target length ('in 2–3 sentences') and use  `max_tokens` as a safety net, not as the primary length control
 6. **Structured output modes**: These are arguably higher leverage than temperature for format consistency, because they make invalid formats impossible rather than unlikely. Examples are:
+
     - **OpenAI JSON mode** (`response_format: { type: "json_object" }`) — guarantees valid JSON output.
     - **OpenAI Structured Outputs** (`response_format: { type: "json_schema", json_schema: {...} }`) — guarantees output conforms to a specific JSON Schema. This is the single most powerful tool for deterministic formats.
     - **Anthropic tool use / forced tool calls** — similar effect; forces output into a defined schema.
     - **Grammar‑constrained decoding** (vLLM, llama.cpp, Outlines) — enforces arbitrary grammars (JSON, regex, custom BNF) at the token level.
+
 7. **Few‑shot examples in the prompt:** Showing 2–3 examples of the exact output format you want is one of the most reliable ways to get consistent structure.
 8. **Post‑processing / validation layer**: For any application that truly requires deterministic formats, you should never trust the model alone. Always validate:
+
     - Parse JSON, check schema.
     - Regex for expected patterns.
     - Retry on failure (with the same or a tightened prompt).
+
 9. **System prompt vs user prompt placement**: Formatting instructions in the system prompt tend to be followed more consistently than the same instructions buried in the user message.
 10. **Single‑task prompts vs multi‑task:** Asking the model to do one thing (classify) produces far more consistent format than asking it to do several things (classify + explain + suggest). If you need multiple outputs, chaining single‑task calls is more format‑stable than one complex prompt.
 
