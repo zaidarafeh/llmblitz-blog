@@ -380,6 +380,34 @@ body {
   font-style: italic;
 }
 
+/* ── Image + Text block ── */
+.post-body .image-text-block {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  margin: 32px 0;
+}
+.post-body .image-text-block--reversed { flex-direction: row-reverse; }
+.post-body .image-text-img { flex: 0 0 45%; }
+.post-body .image-text-img img { width: 100%; border-radius: 6px; border: 1px solid #e5e7eb; }
+.post-body .image-text-content { flex: 1; }
+.post-body .image-text-subtitle { color: #6b7280; font-size: 14px; margin-top: -8px; }
+.post-body .image-text-btn {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 18px;
+  background: #22c55e;
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .post-body .image-text-block,
+  .post-body .image-text-block--reversed { flex-direction: column; }
+}
+
 /* ── CTA card ── */
 .post-cta {
   margin-top: 48px;

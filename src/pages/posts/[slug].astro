@@ -46,6 +46,20 @@ const bodyHtml = toHTML(body ?? [], {
       callout: ({ value }: any) =>
         `<div class="callout callout--${value.style ?? 'info'}">${escapeHtml(value.content ?? '')}</div>`,
 
+      imageTextBlock: ({ value }: any) => {
+        const img = value.mainImage?.asset?.url
+          ? `<img src="${value.mainImage.asset.url}" alt="${escapeHtml(value.mainImage.alt ?? '')}" loading="lazy" />`
+          : '';
+        const text = `
+          ${value.title    ? `<h3>${escapeHtml(value.title)}</h3>` : ''}
+          ${value.subTitle ? `<p class="image-text-subtitle">${escapeHtml(value.subTitle)}</p>` : ''}
+          ${value.description ? toHTML(value.description, { components: {} }) : ''}
+          ${value.button?.text ? `<a href="${value.button.link}" class="image-text-btn"${value.button.openInNewTab ? ' target="_blank" rel="noopener"' : ''}>${escapeHtml(value.button.text)}</a>` : ''}
+        `;
+        const reversed = value.imagePosition === 'right' ? ' image-text-block--reversed' : '';
+        return `<div class="image-text-block${reversed}"><div class="image-text-img">${img}</div><div class="image-text-content">${text}</div></div>`;
+      },
+
       imageBlock: ({ value }: any) => {
         const src = value.image?.asset?.url ?? '';
         const alt = escapeHtml(value.alt ?? '');

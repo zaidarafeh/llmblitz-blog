@@ -54,6 +54,10 @@ export const POST_QUERY = `
       _type == "imageBlock" => {
         ...,
         image { ..., asset-> { url } }
+      },
+      _type == "imageTextBlock" => {
+        ...,
+        mainImage { ..., asset-> { url } }
       }
     }
   }
