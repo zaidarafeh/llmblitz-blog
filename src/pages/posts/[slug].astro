@@ -46,7 +46,7 @@ const bodyHtml = toHTML(body ?? [], {
       callout: ({ value }: any) =>
         `<div class="callout callout--${value.style ?? 'info'}">${escapeHtml(value.content ?? '')}</div>`,
 
-      imageTextBlock: ({ value }: any) => {
+      ImageTextBlockType: ({ value }: any) => {
         const img = value.mainImage?.asset?.url
           ? `<img src="${value.mainImage.asset.url}" alt="${escapeHtml(value.mainImage.alt ?? '')}" loading="lazy" />`
           : '';

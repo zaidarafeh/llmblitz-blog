@@ -136,7 +136,7 @@ export const postType = defineType({
         },
 
         // ── Image + Text block ────────────────────────────────────────
-        { type: 'imageTextBlock' },
+        { type: 'ImageTextBlockType' },
 
         // ── Rich Table (sanity-plugin-rich-table, v5 compatible) ─────
         { type: 'richTableBlock' },
