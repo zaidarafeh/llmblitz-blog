@@ -49,7 +49,13 @@ export const POST_QUERY = `
     tags,
     tool,
     toolHref,
-    body
+    body[] {
+      ...,
+      _type == "imageBlock" => {
+        ...,
+        image { ..., asset-> { url } }
+      }
+    }
   }
 `;
 
