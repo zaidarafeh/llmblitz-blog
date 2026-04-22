@@ -1,0 +1,124 @@
+---
+title: Why Your Prompt Returns Different Results On Every Run — And 10 Things You can Do to Fix It
+description: Most AI Builders test whether a prompt works. Few test whether it works the same way consistently. Here's how we designed and built three-dimensional consistency scoring — and why the distinction between structure, text, and meaning matters.
+pubDate: 2026-04-15
+tags:
+  - Prompt Engineering
+  - Production
+  - LLM Evaluation
+  - LLM Response Similarity
+tool: BlitzLab, Prompt Designer
+toolHref: /optimize
+draft: false
+---
+
+Most AI builders test whether a prompt works. Few test whether the prompt works the _same way_ consistently.
+
+This gap is what breaks production systems. A prompt that produces correct output 95% of the time sounds OK — until you realize that the other 5% it silently breaks a downstream parser, fails a regex match, or sends a customer a query instead of the needed data.
+
+Consistency isn't a nice-to-have. For production prompts, it's a correctness requirement.
+
+## The problem with eyeballing output
+
+The standard approach is to run a prompt a few times, read the outputs, and decide if the outputs look similar enough. This works for detecting obvious instability but misses the cases that actually cause incidents:
+
+- The model always gives you the right answer, but sometimes as a bullet list and sometimes as a paragraph
+- The wording varies just enough that a JSON parser chokes on one of five runs
+- The output length swings between 40 and 400 tokens depending on token-level chance decisions early in the generation
+
+None of these cases look broken when you're eyeballing them. They look broken when they're in production at 10,000 calls a day.
+
+## Three types of consistency
+
+When we built consistency scoring into [LLMBlitz](https://LLMBlitz.io), we realized there are actually three different concepts that people refer to when they say a prompt output is "consistent":
+
+**Structural consistency** — Do the outputs have the same shape? This is what matters most for data workflows. A prompt that returns JSON four times and a bullet list on the fifth run will break your pipeline — even if the content is correct every time. Structure means: same format type, same keys present, same nesting depth, same number of items.
+
+**Text consistency** — Do the outputs use the same words? This is what matters when downstream systems do exact matching on the output. A regex, a template matcher, a classifier trained on your outputs — all of these care about literal wording, not intent.
+
+**Meaning consistency** — Do the outputs convey the same idea? This is what matters when a human reads the output. Two sentences that use different words but say the same thing are perfectly consistent for a customer-facing use case.
+
+These three measures can diverge significantly — and when they do, the combination tells you something specific and actionable.
+
+[![Structural Consistency vs Text Consistency vs Meaning Consistency in BlitzLab](/images/Consistency%201.png "Structural Consistency vs Text Consistency vs Meaning Consistency in BlitzLab")](https://llmblitz.io)
+
+Figure 1: Structural Consistency vs Text Consistency vs Meaning Consistency Scores in BlitzLab
+
+## How we compute each
+
+**Structural consistency** uses format-class detection. We classify each output into a format type — valid JSON, bullet list, numbered list, single-line response, multi-paragraph prose — and check whether all runs produce the same type. For JSON outputs, we go further: we compare the key structure and value types across runs. If every run returns `{"name": string, "age": number}`, structural consistency is perfect even if the values differ completely. This check is fast, deterministic, and catches the failure mode that actually kills pipelines.
+
+**Text consistency** uses the Dice coefficient — a word-overlap measure:
+
+```plain
+Dice(A, B) = 2 × |words(A) ∩ words(B)| / (|words(A)| + |words(B)|)
+```
+
+It's simple, fast, costs nothing, and is exactly right for the use case. If two outputs share 90% of their words, a downstream parser will probably handle both. If they share 40%, it probably won't.
+
+**Meaning consistency** uses cosine similarity on text embeddings (OpenAI's `text-embedding-3-small`). Each output is converted into a 1536-dimensional vector representing its semantic content, and we measure the angle between the two vectors. Outputs that mean the same thing cluster together regardless of wording.
+
+[![Response consistency score in BlitzLab](/images/Consistency.png "Response consistency score in BlitzLab")](https://llmblitz.io)
+
+Figure 2: The Response Consistency score in BlitzLab
+
+## What the combination tells you
+
+| Structure | Text | Meaning | What it means |
+| --- | --- | --- | --- |
+| High | High | High | Maximally consistent — safe for any use case |
+| High | Low | High | Same shape, same idea, different wording — ideal for data workflows where a parser handles the structure and the content just needs to be correct |
+| **Low** | Low | High | Same meaning, but the format shifts between runs — the most dangerous case for pipelines. The model knows what to say but not how to shape it. Add a format constraint. |
+| High | High | Low | Same structure and wording, different meaning — rare, but it means the model is confidently templating different answers into the same shape. Check whether the prompt is ambiguous. |
+| Low | Low | Low | Genuinely inconsistent — the prompt needs fundamental work |
+
+The most actionable row is the third one. A prompt where structural consistency is low but meaning consistency is high isn't broken — it's underspecified. The model has the right answer but no instructions on how to package it. The fix is surgical: add a format constraint or use a structured output mode. Without all three scores, you'd miss this — text consistency alone would panic, meaning consistency alone would pass it.
+
+## What drives inconsistency
+
+Temperature is the biggest lever. At `temperature=1.0`, the model samples from a wide probability distribution at each token. Early token choices cascade — if the model opens with "The" vs "A" vs "Here's", the entire output diverges from that branch.
+
+But temperature isn't the whole story. We also surface **avg token confidence** from the logprobs — the probability the model assigned to each token it actually generated. Low average confidence means the model was genuinely uncertain at many decision points, which predicts high variance even at moderate temperatures.
+
+Our heuristic consistency estimate combines both.
+
+This gives you an instant estimate before you've run a single additional call. The empirical check (actually running the prompt twice and comparing) gives you the ground truth.
+
+## The fix
+
+When consistency is low, the interventions are predictable:
+
+1. **Lower temperature** — the highest-leverage change on the model parameters side is setting `temperature=0`. This setting makes token selection greedy (always pick the most probable next token), which is the strongest single lever for reducing output variability. It does not guarantee byte‑identical results across calls due to floating‑point non‑determinism and infrastructure differences, but in practice it gets you very close. Reasons why some variance remains:
+
+    - GPU floating‑point non‑determinism (batching, parallelism) can cause tiny logit differences that flip ties.
+    - OpenAI has explicitly noted that temperature=0 may not produce byte‑identical results across requests.
+    - Model version updates (silent or announced) change weights entirely.
+
+2. **Set a seed** — many providers expose a seed parameter that biases the model toward the same token choices across runs at a given temperature. Unlike temperature=0, a seed lets you reduce variance without fully removing variability (i.e. creativity) — useful when the task still needs some creativity but the output structure has to be stable. Note that seed support is provider-specific (OpenAI exposes it; Anthropic does not as of this writing), and it's a strong hint rather than a guarantee — the same seed can produce different output if the model version changes.
+3. **Add explicit format constraints** — "respond in exactly one sentence", "return only the classification label", "always use bullet points". The model follows these near reliably.
+4. **Replace open-ended phrasing** — "describe", "explain", "discuss" invite variable-length, variable-structure responses. "List exactly 3 reasons" doesn't.
+5. **Constrain output length** — `max_tokens`is a hard truncation cap — the model doesn't plan around it, so output may be cut off mid‑structure. For cleaner results, prompt for a target length ('in 2–3 sentences') and use  `max_tokens` as a safety net, not as the primary length control
+6. **Structured output modes**: These are arguably higher leverage than temperature for format consistency, because they make invalid formats impossible rather than unlikely. Examples are:
+
+    - **OpenAI JSON mode** (`response_format: { type: "json_object" }`) — guarantees valid JSON output.
+    - **OpenAI Structured Outputs** (`response_format: { type: "json_schema", json_schema: {...} }`) — guarantees output conforms to a specific JSON Schema. This is the single most powerful tool for deterministic formats.
+    - **Anthropic tool use / forced tool calls** — similar effect; forces output into a defined schema.
+    - **Grammar‑constrained decoding** (vLLM, llama.cpp, Outlines) — enforces arbitrary grammars (JSON, regex, custom BNF) at the token level.
+
+7. **Few‑shot examples in the prompt:** Showing 2–3 examples of the exact output format you want is one of the most reliable ways to get consistent structure.
+8. **Post‑processing / validation layer**: For any application that truly requires deterministic formats, you should never trust the model alone. Always validate:
+
+    - Parse JSON, check schema.
+    - Regex for expected patterns.
+    - Retry on failure (with the same or a tightened prompt).
+
+9. **System prompt vs user prompt placement**: Formatting instructions in the system prompt tend to be followed more consistently than the same instructions buried in the user message.
+10. **Single‑task prompts vs multi‑task:** Asking the model to do one thing (classify) produces far more consistent format than asking it to do several things (classify + explain + suggest). If you need multiple outputs, chaining single‑task calls is more format‑stable than one complex prompt.
+
+## Try it
+
+Run any prompt in [BlitzLab](/optimize) and click **Test consistency** in the findings bar after your first run. You'll get all three scores, a verdict, and a specific recommendation based on the combination.
+
+If structural consistency is low but meaning consistency is high, you'll see: _"Outputs convey the same intent but the format shifts between runs — add an explicit format constraint to stabilize the output shape for downstream consumers."_
+
+That's the kind of signal that turns a debugging session into a one-line prompt fix.
